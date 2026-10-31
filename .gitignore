@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Personal learning notes
+.vibe-wise/
+
+# Personal Claude Code settings
+.claude/settings.local.json
