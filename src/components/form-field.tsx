@@ -10,6 +10,7 @@ type Props = {
   multiline?: boolean;
   errors?: string[];
   autoFocus?: boolean;
+  className?: string; // passed to the input/textarea
 };
 
 // A labeled input/textarea that shows field errors from an ActionResult.
@@ -21,6 +22,7 @@ export function FormField({
   multiline,
   errors,
   autoFocus,
+  className,
 }: Props) {
   const id = `field-${name}`;
   const errorId = `${id}-error`;
@@ -30,6 +32,7 @@ export function FormField({
     defaultValue: defaultValue ?? "",
     required,
     autoFocus,
+    className,
     "aria-invalid": errors?.length ? true : undefined,
     "aria-describedby": errors?.length ? errorId : undefined,
   };

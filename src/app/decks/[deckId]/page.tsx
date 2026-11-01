@@ -42,7 +42,7 @@ async function DeckView({ params }: { params: PageProps<"/decks/[deckId]">["para
       .maybeSingle(),
     supabase
       .from("cards")
-      .select("id, front, back, reading, example, notes")
+      .select("id, front, back")
       .eq("deck_id", deckId)
       .order("created_at", { ascending: false }),
   ]);

@@ -21,10 +21,8 @@ export const deckSchema = z.object({
 
 export const cardSchema = z.object({
   front: requiredText(500),
+  // Multiline: definition plus any readings, examples and notes.
   back: requiredText(5000),
-  reading: optionalText(5000),
-  example: optionalText(5000),
-  notes: optionalText(5000),
 });
 
 // Reads the named fields from FormData as strings ("" when missing).

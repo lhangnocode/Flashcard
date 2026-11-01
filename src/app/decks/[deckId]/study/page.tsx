@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { idSchema } from "@/lib/validation";
 
 const BATCH_SIZE = 30;
-const CARD_FIELDS = "id, front, back, reading, example, notes";
+const CARD_FIELDS = "id, front, back";
 
 export default function StudyPage(props: PageProps<"/decks/[deckId]/study">) {
   return (

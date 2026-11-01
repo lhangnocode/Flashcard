@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"cards": {
                   Row: {
-                    "back": string,"created_at": string,"deck_id": string,"ease_factor": number,"example": string | null,"front": string,"id": string,"interval_days": number,"next_review_at": string,"notes": string | null,"reading": string | null,"repetitions": number,"status": string,"updated_at": string,"user_id": string
+                    "back": string,"created_at": string,"deck_id": string,"ease_factor": number,"front": string,"id": string,"interval_days": number,"next_review_at": string,"repetitions": number,"status": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "back": string,"created_at"?: string,"deck_id": string,"ease_factor"?: number,"example"?: string | null,"front": string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"notes"?: string | null,"reading"?: string | null,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id": string
+                    "back": string,"created_at"?: string,"deck_id": string,"ease_factor"?: number,"front": string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "back"?: string,"created_at"?: string,"deck_id"?: string,"ease_factor"?: number,"example"?: string | null,"front"?: string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"notes"?: string | null,"reading"?: string | null,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id"?: string
+                    "back"?: string,"created_at"?: string,"deck_id"?: string,"ease_factor"?: number,"front"?: string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {

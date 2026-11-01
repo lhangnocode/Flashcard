@@ -6,9 +6,6 @@ export type StudyCard = {
   id: string;
   front: string;
   back: string;
-  reading: string | null;
-  example: string | null;
-  notes: string | null;
 };
 
 // 3D flip: both faces are stacked in the same grid cell; the inner element
@@ -42,21 +39,9 @@ export function FlipCard({
         </Face>
 
         <Face hidden={!flipped} back>
-          <div className="grid gap-1 text-center">
-            <p className="text-xl font-semibold">{card.front}</p>
-            {card.reading ? (
-              <p className="text-sm text-muted-foreground">{card.reading}</p>
-            ) : null}
-          </div>
-          <p className="text-center text-lg whitespace-pre-line">{card.back}</p>
-          {card.example ? (
-            <p className="rounded-lg bg-muted px-3 py-2 text-sm whitespace-pre-line">
-              {card.example}
-            </p>
-          ) : null}
-          {card.notes ? (
-            <p className="text-xs text-muted-foreground whitespace-pre-line">{card.notes}</p>
-          ) : null}
+          <p className="text-center text-xl font-semibold">{card.front}</p>
+          {/* Left-aligned so multiline backs (reading, examples) stay readable. */}
+          <p className="text-lg whitespace-pre-wrap break-words">{card.back}</p>
         </Face>
       </div>
     </button>

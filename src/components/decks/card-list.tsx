@@ -25,8 +25,8 @@ export function CardList({ deckId, cards }: { deckId: string; cards: CardData[] 
     const q = filter.trim().toLowerCase();
     if (!q) return cards;
     return cards.filter((card) =>
-      [card.front, card.back, card.reading, card.example, card.notes].some((field) =>
-        field?.toLowerCase().includes(q),
+      [card.front, card.back].some((field) =>
+        field.toLowerCase().includes(q),
       ),
     );
   }, [cards, filter]);
@@ -93,13 +93,8 @@ function CardRow({ card, onEdit }: { card: CardData; onEdit: () => void }) {
       <div className="grid min-w-0 flex-1 gap-0.5">
         <p className="font-medium">
           {card.front}
-          {card.reading ? (
-            <span className="ml-2 text-sm font-normal text-muted-foreground">
-              {card.reading}
-            </span>
-          ) : null}
         </p>
-        <p className="line-clamp-2 text-sm text-muted-foreground whitespace-pre-line">
+        <p className="line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap">
           {card.back}
         </p>
         {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}

@@ -98,7 +98,7 @@ export async function deleteDeck(deckId: string): Promise<ActionResult> {
 
 // ---------------------------------------------------------------- cards
 
-const CARD_FIELDS = ["front", "back", "reading", "example", "notes"] as const;
+const CARD_FIELDS = ["front", "back"] as const;
 
 export async function createCard(
   deckId: string,

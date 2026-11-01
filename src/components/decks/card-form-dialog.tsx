@@ -18,9 +18,6 @@ export type CardData = {
   id: string;
   front: string;
   back: string;
-  reading: string | null;
-  example: string | null;
-  notes: string | null;
 };
 
 // Controlled dialog: the parent decides when it's open, so it can be opened
@@ -73,14 +70,9 @@ function CardForm({
     <form action={formAction} className="grid gap-4">
       <FormField name="front" label="Front (term / grammar point)" required autoFocus
         defaultValue={card?.front} errors={errors?.front} />
-      <FormField name="reading" label="Reading (furigana / kana)"
-        defaultValue={card?.reading} errors={errors?.reading} />
-      <FormField name="back" label="Back (definition / explanation)" required multiline
+      <FormField name="back" label="Back (meaning, reading, examples, notes)" required multiline
+        className="min-h-40 max-h-[50vh] overflow-y-auto"
         defaultValue={card?.back} errors={errors?.back} />
-      <FormField name="example" label="Example sentences (one per line)" multiline
-        defaultValue={card?.example} errors={errors?.example} />
-      <FormField name="notes" label="Usage notes" multiline
-        defaultValue={card?.notes} errors={errors?.notes} />
       <FormError message={state && !state.ok ? state.error : undefined} />
       <DialogFooter>
         <DialogClose render={<Button variant="outline" type="button" />}>
