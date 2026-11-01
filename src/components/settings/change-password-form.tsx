@@ -6,6 +6,7 @@ import { FormError } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PASSWORD_MIN_LENGTH } from "@/lib/validation";
 
 export function ChangePasswordForm() {
   // React resets the form's fields after each submission, so passwords
@@ -15,6 +16,8 @@ export function ChangePasswordForm() {
 
   return (
     <form action={formAction} className="grid gap-4">
+      <PasswordField name="current" label="Current password" errors={errors?.current}
+        autoComplete="current-password" minLength={1} />
       <PasswordField name="password" label="New password" errors={errors?.password}
         autoComplete="new-password" />
       <PasswordField name="confirm" label="Confirm new password" errors={errors?.confirm}
@@ -37,11 +40,13 @@ function PasswordField({
   label,
   errors,
   autoComplete,
+  minLength = PASSWORD_MIN_LENGTH,
 }: {
   name: string;
   label: string;
   errors?: string[];
   autoComplete: string;
+  minLength?: number; // the current password may predate the 8-character rule
 }) {
   const id = `field-${name}`;
   const errorId = `${id}-error`;
@@ -53,8 +58,7 @@ function PasswordField({
         name={name}
         type="password"
         required
-        minLength={8}
-        maxLength={72}
+        minLength={minLength}
         autoComplete={autoComplete}
         aria-invalid={errors?.length ? true : undefined}
         aria-describedby={errors?.length ? errorId : undefined}

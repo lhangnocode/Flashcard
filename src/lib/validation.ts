@@ -35,6 +35,32 @@ const MAX_SHOWN_CARDS = 10_000;
 // Search params can be missing, repeated (?q=a&q=b → array), or forged.
 const firstParam = (value: unknown) => (Array.isArray(value) ? value[0] : value);
 
+// ---------------------------------------------------------------- passwords
+
+// For NEW passwords only (sign-up, change). Sign-in has no length rule, so an
+// account created under an older, shorter minimum can still sign in.
+// Not trimmed: spaces are valid password characters. bcrypt (used by Supabase
+// Auth) reads at most 72 BYTES; accented and Japanese characters take 2–3
+// bytes each in UTF-8, so the limit is counted in bytes, not characters.
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_BYTES = 72;
+
+export function passwordProblem(password: string): "too_short" | "too_long" | null {
+  if (password.length < PASSWORD_MIN_LENGTH) return "too_short";
+  if (new TextEncoder().encode(password).length > PASSWORD_MAX_BYTES) return "too_long";
+  return null;
+}
+
+export const PASSWORD_MESSAGES = {
+  too_short: `At least ${PASSWORD_MIN_LENGTH} characters`,
+  too_long: `At most ${PASSWORD_MAX_BYTES} bytes (accented or Japanese characters count as 2–3)`,
+} as const;
+
+export const newPasswordSchema = z.string().superRefine((password, ctx) => {
+  const problem = passwordProblem(password);
+  if (problem) ctx.addIssue({ code: "custom", message: PASSWORD_MESSAGES[problem] });
+});
+
 // ?q= → trimmed query, or "" when missing/blank/too long (show the normal list).
 export function parseSearchQuery(value: unknown) {
   const parsed = z.string().trim().max(SEARCH_MAX_LENGTH).safeParse(firstParam(value));

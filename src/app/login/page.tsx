@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { PASSWORD_MAX_BYTES, PASSWORD_MIN_LENGTH } from "@/lib/validation";
 import { signIn, signUp } from "./actions";
 
 // Fixed messages keyed by code, so the URL can't inject arbitrary text.
@@ -6,9 +7,18 @@ const MESSAGES: Record<string, { text: string; isError: boolean }> = {
   missing_fields: { text: "Enter your email and password.", isError: true },
   invalid_credentials: { text: "Wrong email or password.", isError: true },
   signup_failed: {
-    text: "Couldn't create the account. The email may already be registered, or the password is too short.",
+    text: "Couldn't create the account. The email may already be registered.",
     isError: true,
   },
+  password_too_short: {
+    text: `New passwords need at least ${PASSWORD_MIN_LENGTH} characters.`,
+    isError: true,
+  },
+  password_too_long: {
+    text: `New passwords can be at most ${PASSWORD_MAX_BYTES} bytes (accented or Japanese characters count as 2–3).`,
+    isError: true,
+  },
+  signup_disabled: { text: "Sign-ups are closed.", isError: true },
   auth_callback_failed: {
     text: "That sign-in link is invalid or expired.",
     isError: true,

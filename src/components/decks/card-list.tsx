@@ -1,8 +1,8 @@
 "use client";
 
-import { EllipsisIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { ChevronDownIcon, EllipsisIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 import { deleteCard } from "@/app/decks/actions";
 import { CardFormDialog, type CardData } from "@/components/decks/card-form-dialog";
 import { CardSearch } from "@/components/decks/card-search";
@@ -70,7 +70,8 @@ export function CardList({
                   : `${cards.length} ${cards.length === 1 ? "match" : "matches"}`
                 : `Showing ${cards.length} of ${totalCards} ${totalCards === 1 ? "card" : "cards"}`}
             </p>
-            <ul className="divide-y rounded-xl border">
+            {/* Keyed by the search, so a new search starts with every card collapsed. */}
+            <ul key={`${query}|${scope}`} className="divide-y rounded-xl border">
               {cards.map((card) => (
                 <CardRow
                   key={card.id}
@@ -119,17 +120,49 @@ function CardRow({ card, onEdit }: { card: CardData; onEdit: () => void }) {
     });
   }
 
+  const [expanded, setExpanded] = useState(false);
+  const panelId = useId();
+
+  // A click that ends a text selection (e.g. copying a term) shouldn't toggle.
+  function onContentClick() {
+    if (window.getSelection()?.type === "Range") return;
+    setExpanded((open) => !open);
+  }
+
   return (
-    <li className={`flex items-start gap-3 p-3 ${pending ? "opacity-50" : ""}`}>
-      <div className="grid min-w-0 flex-1 gap-0.5">
-        <p className="font-medium">
-          {card.front}
-        </p>
-        <p className="line-clamp-3 text-sm text-muted-foreground whitespace-pre-wrap">
-          {card.back}
-        </p>
+    <li
+      className={`flex items-start gap-1 p-3 transition-colors hover:bg-muted/40 ${pending ? "opacity-50" : ""}`}
+    >
+      {/* Mouse/touch target. Keyboard and screen readers use the chevron
+          button; the menu sits beside this area, not inside it, so its clicks
+          (which React passes up the component tree even from a portal) never
+          toggle the card. */}
+      <div className="grid min-w-0 flex-1 cursor-pointer gap-0.5 pr-2" onClick={onContentClick}>
+        <p className="font-medium whitespace-pre-wrap">{card.front}</p>
+        {expanded ? (
+          <div
+            id={panelId}
+            className="mt-2 rounded-md border bg-muted/40 p-3 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground"
+          >
+            {card.back}
+          </div>
+        ) : (
+          <p id={panelId} className="line-clamp-2 text-sm whitespace-pre-wrap text-muted-foreground">
+            {card.back}
+          </p>
+        )}
         {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
       </div>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        aria-label={`${expanded ? "Collapse" : "Expand"} ${card.front}`}
+        onClick={() => setExpanded((open) => !open)}
+      >
+        <ChevronDownIcon className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${card.front}`} />}
