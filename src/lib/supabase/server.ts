@@ -1,12 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
+import type { Database } from "@/types/database.types";
 
 // Supabase client for Server Components, Server Actions, and Route Handlers.
 // Create a new one per request; never share it between requests.
 export async function createClient() {
+  // Supabase auth checks token expiry with Date.now(). connection() tells
+  // Next.js this work only happens at request time, never during prerendering
+  // (including partial prefetches), which Cache Components otherwise flags.
+  await connection();
   const cookieStore = await cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
