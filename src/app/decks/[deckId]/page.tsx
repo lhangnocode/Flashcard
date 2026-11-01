@@ -12,8 +12,10 @@ import {
   CARD_PAGE_SIZE,
   idSchema,
   parseSearchQuery,
+  parseSearchScope,
   parseShowCount,
   SEARCH_RESULT_LIMIT,
+  type SearchScope,
 } from "@/lib/validation";
 
 // PostgREST returns at most this many rows per request (max_rows in
@@ -44,6 +46,7 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
   // A malformed ID would make Postgres throw (22P02); treat it as not found.
   if (!idSchema.safeParse(deckId).success) notFound();
   const query = parseSearchQuery(search.q);
+  const scope = parseSearchScope(search.scope);
   const show = parseShowCount(search.show);
 
   await requireUser();
@@ -51,7 +54,7 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
   const [deckResult, countResult, cards] = await Promise.all([
     supabase.from("decks").select("id, title, description").eq("id", deckId).maybeSingle(),
     supabase.from("cards").select("id", { count: "exact", head: true }).eq("deck_id", deckId),
-    query ? searchCards(supabase, deckId, query) : listCards(supabase, deckId, show + 1),
+    query ? searchCards(supabase, deckId, query, scope) : listCards(supabase, deckId, show + 1),
   ]);
 
   if (deckResult.error) throw deckResult.error;
@@ -99,6 +102,7 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
         cards={hasMore ? cards.slice(0, show) : cards}
         totalCards={totalCards}
         query={query}
+        scope={scope}
         searchCapped={!!query && cards.length >= SEARCH_RESULT_LIMIT}
         nextShow={hasMore ? show + CARD_PAGE_SIZE : null}
       />
@@ -108,17 +112,23 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-async function searchCards(supabase: Supabase, deckId: string, query: string) {
+async function searchCards(
+  supabase: Supabase,
+  deckId: string,
+  query: string,
+  scope: SearchScope,
+) {
   const { data, error } = await supabase.rpc("search_deck_cards", {
     p_deck_id: deckId,
     p_query: query,
     p_limit: SEARCH_RESULT_LIMIT,
+    p_scope: scope,
   });
   if (error) throw error;
   return data;
 }
 
-// Newest first, up to `limit` cards, in PAGE_SIZE requests.
+// In deck order (insert/import order), up to `limit` cards, in PAGE_SIZE requests.
 async function listCards(supabase: Supabase, deckId: string, limit: number) {
   const cards: { id: string; front: string; back: string }[] = [];
   while (cards.length < limit) {
@@ -128,7 +138,7 @@ async function listCards(supabase: Supabase, deckId: string, limit: number) {
       .from("cards")
       .select("id, front, back")
       .eq("deck_id", deckId)
-      .order("created_at", { ascending: false })
+      .order("position", { ascending: true })
       .order("id")
       .range(from, to);
     if (error) throw error;

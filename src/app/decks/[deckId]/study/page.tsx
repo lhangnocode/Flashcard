@@ -57,7 +57,9 @@ async function StudyLoader({
       .select(CARD_FIELDS)
       .eq("deck_id", deckId)
       .eq("status", "new")
-      .order("created_at", { ascending: true })
+      // Deck order, so new cards come up as they were imported (1.1, 1.2, …).
+      .order("position", { ascending: true })
+      .order("id")
       .limit(BATCH_SIZE - due.length);
     if (error) throw error;
     fresh = data;

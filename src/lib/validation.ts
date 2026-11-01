@@ -41,6 +41,14 @@ export function parseSearchQuery(value: unknown) {
   return parsed.success ? parsed.data : "";
 }
 
+// ?scope= → which side of the card to search; anything else means both.
+export const SEARCH_SCOPES = ["all", "front", "back"] as const;
+export type SearchScope = (typeof SEARCH_SCOPES)[number];
+export function parseSearchScope(value: unknown): SearchScope {
+  const parsed = z.enum(SEARCH_SCOPES).safeParse(firstParam(value));
+  return parsed.success ? parsed.data : "all";
+}
+
 // ?show= → how many cards to list, in steps of CARD_PAGE_SIZE.
 export function parseShowCount(value: unknown) {
   const parsed = z.coerce

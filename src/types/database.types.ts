@@ -51,14 +51,14 @@ isOneToOne: false
                   ]
                 },"cards": {
                   Row: {
-                    "back": string,"created_at": string,"deck_id": string,"ease_factor": number,"front": string,"id": string,"interval_days": number,"next_review_at": string,"repetitions": number,"status": string,"updated_at": string,"user_id": string
+                    "back": string,"created_at": string,"deck_id": string,"ease_factor": number,"front": string,"id": string,"interval_days": number,"next_review_at": string,"position": number,"repetitions": number,"status": string,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "back": string,"created_at"?: string,"deck_id": string,"ease_factor"?: number,"front": string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id": string
+                    "back": string,"created_at"?: string,"deck_id": string,"ease_factor"?: number,"front": string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"position"?: number,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "back"?: string,"created_at"?: string,"deck_id"?: string,"ease_factor"?: number,"front"?: string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id"?: string
+                    "back"?: string,"created_at"?: string,"deck_id"?: string,"ease_factor"?: number,"front"?: string,"id"?: string,"interval_days"?: number,"next_review_at"?: string,"position"?: number,"repetitions"?: number,"status"?: string,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -143,7 +143,7 @@ isOneToOne: false
             }[]
                            },
 "search_deck_cards":
-{ Args: { "p_deck_id": string,"p_limit"?: number,"p_query": string }; Returns: {
+{ Args: { "p_deck_id": string,"p_limit"?: number,"p_query": string,"p_scope"?: string }; Returns: {
               "back": string,"front": string,"id": string
             }[]
                            },

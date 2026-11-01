@@ -14,7 +14,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SEARCH_RESULT_LIMIT } from "@/lib/validation";
+import { SEARCH_RESULT_LIMIT, type SearchScope } from "@/lib/validation";
+
+const SCOPE_LABEL: Record<SearchScope, string> = {
+  all: "",
+  front: " on the front",
+  back: " on the back",
+};
 
 // Which dialog is open: none, "add", or editing a specific card.
 type DialogState = { mode: "closed" } | { mode: "add" } | { mode: "edit"; card: CardData };
@@ -24,6 +30,7 @@ export function CardList({
   cards,
   totalCards,
   query,
+  scope,
   searchCapped,
   nextShow,
 }: {
@@ -31,6 +38,7 @@ export function CardList({
   cards: CardData[];
   totalCards: number; // all cards in the deck, not just the ones shown
   query: string; // "" = no search
+  scope: SearchScope;
   searchCapped: boolean; // search hit the result limit
   nextShow: number | null; // ?show= value for "Load more", or null if none
 }) {
@@ -41,7 +49,7 @@ export function CardList({
     // and the list dims through group-has-data-pending.
     <section className="group grid gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <CardSearch deckId={deckId} initialQuery={query} />
+        <CardSearch deckId={deckId} initialQuery={query} initialScope={scope} />
         <Button onClick={() => setDialog({ mode: "add" })}>
           <PlusIcon /> Add card
         </Button>
@@ -52,7 +60,7 @@ export function CardList({
         {totalCards === 0 ? (
           <p className="text-sm text-muted-foreground">No cards yet. Add your first one.</p>
         ) : cards.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No cards match “{query}”.</p>
+          <p className="text-sm text-muted-foreground">No cards match “{query}”{SCOPE_LABEL[scope]}.</p>
         ) : (
           <>
             <p className="text-xs text-muted-foreground">
@@ -75,7 +83,7 @@ export function CardList({
         )}
         {nextShow ? (
           <Link
-            href={`/decks/${deckId}?show=${nextShow}`}
+            href={`/decks/${deckId}?show=${nextShow}${scope === "all" ? "" : `&scope=${scope}`}`}
             replace
             scroll={false}
             className={buttonVariants({ variant: "outline", className: "justify-self-center" })}
