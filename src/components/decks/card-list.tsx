@@ -4,6 +4,7 @@ import { EllipsisIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
 import { deleteCard } from "@/app/decks/actions";
 import { CardFormDialog, type CardData } from "@/components/decks/card-form-dialog";
+import { QuizletImportDialog } from "@/components/decks/quizlet-import-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ export function CardList({ deckId, cards }: { deckId: string; cards: CardData[] 
         <Button onClick={() => setDialog({ mode: "add" })}>
           <PlusIcon /> Add card
         </Button>
+        <QuizletImportDialog deckId={deckId} />
       </div>
 
       {cards.length === 0 ? (

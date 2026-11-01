@@ -8,10 +8,14 @@ import { createClient } from "@/lib/supabase/server";
 import {
   type ActionResult,
   type ActionState,
+  type CardInput,
   cardSchema,
   deckSchema,
   formFields,
+  frontKey,
   idSchema,
+  importSchema,
+  type ImportResult,
 } from "@/lib/validation";
 
 // Server Actions are public endpoints: every ID below came from the browser
@@ -168,4 +172,74 @@ export async function deleteCard(cardId: string): Promise<ActionResult> {
 
   refresh();
   return { ok: true };
+}
+
+// ---------------------------------------------------------------- import
+
+// PostgREST returns at most this many rows per request (max_rows in
+// supabase/config.toml), so existing fronts are read in pages.
+const PAGE_SIZE = 1000;
+
+export async function importCards(
+  deckId: string,
+  cards: CardInput[],
+  options: { skipExisting: boolean },
+): Promise<ImportResult> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(deckId).success) return { ok: false, error: "Not found." };
+
+  // The browser already parsed and filtered these, but the arguments can be
+  // forged, so validate the whole payload again.
+  const parsed = importSchema.safeParse({ cards, skipExisting: options?.skipExisting });
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const index = issue?.path[0] === "cards" ? issue.path[1] : undefined;
+    const prefix = typeof index === "number" ? `Card ${index + 1}: ` : "";
+    return { ok: false, error: `${prefix}${issue?.message ?? "Invalid import."}` };
+  }
+
+  const supabase = await createClient();
+  let rows = parsed.data.cards;
+
+  if (parsed.data.skipExisting) {
+    const seen = new Set<string>();
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("front")
+        .eq("deck_id", deckId)
+        .eq("user_id", user.id)
+        .order("id")
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) {
+        console.error("importCards: existing fronts", error);
+        return { ok: false, error: "Something went wrong. Try again." };
+      }
+      for (const card of data) seen.add(frontKey(card.front));
+      if (data.length < PAGE_SIZE) break;
+    }
+    // Also drops repeats within this import (the set grows as we go).
+    rows = rows.filter((card) => {
+      const key = frontKey(card.front);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  const skippedDuplicates = parsed.data.cards.length - rows.length;
+  if (rows.length === 0) return { ok: true, imported: 0, skippedDuplicates };
+
+  // One INSERT statement: all rows are saved, or none are.
+  const { error } = await supabase
+    .from("cards")
+    .insert(rows.map((card) => ({ ...card, deck_id: deckId, user_id: user.id })));
+  if (error) {
+    if (error.code === FK_VIOLATION) return { ok: false, error: "Not found." };
+    console.error("importCards: insert", error);
+    return { ok: false, error: "Something went wrong. Try again." };
+  }
+
+  refresh();
+  return { ok: true, imported: rows.length, skippedDuplicates };
 }
