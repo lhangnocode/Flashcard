@@ -25,6 +25,33 @@ export const cardSchema = z.object({
   back: requiredText(5000),
 });
 
+// ---------------------------------------------------------------- search
+
+export const SEARCH_MAX_LENGTH = 200;
+export const SEARCH_RESULT_LIMIT = 100; // also enforced inside search_deck_cards
+export const CARD_PAGE_SIZE = 50;
+const MAX_SHOWN_CARDS = 10_000;
+
+// Search params can be missing, repeated (?q=a&q=b → array), or forged.
+const firstParam = (value: unknown) => (Array.isArray(value) ? value[0] : value);
+
+// ?q= → trimmed query, or "" when missing/blank/too long (show the normal list).
+export function parseSearchQuery(value: unknown) {
+  const parsed = z.string().trim().max(SEARCH_MAX_LENGTH).safeParse(firstParam(value));
+  return parsed.success ? parsed.data : "";
+}
+
+// ?show= → how many cards to list, in steps of CARD_PAGE_SIZE.
+export function parseShowCount(value: unknown) {
+  const parsed = z.coerce
+    .number()
+    .int()
+    .min(CARD_PAGE_SIZE)
+    .max(MAX_SHOWN_CARDS)
+    .safeParse(firstParam(value));
+  return parsed.success ? Math.ceil(parsed.data / CARD_PAGE_SIZE) * CARD_PAGE_SIZE : CARD_PAGE_SIZE;
+}
+
 // ---------------------------------------------------------------- import
 
 export const MAX_IMPORT_CARDS = 500;

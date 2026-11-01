@@ -8,9 +8,21 @@ import { DeleteDeckButton } from "@/components/decks/delete-deck-button";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { idSchema } from "@/lib/validation";
+import {
+  CARD_PAGE_SIZE,
+  idSchema,
+  parseSearchQuery,
+  parseShowCount,
+  SEARCH_RESULT_LIMIT,
+} from "@/lib/validation";
 
-export default function DeckPage(props: PageProps<"/decks/[deckId]">) {
+// PostgREST returns at most this many rows per request (max_rows in
+// supabase/config.toml), so longer lists are read in pages.
+const PAGE_SIZE = 1000;
+
+type Props = PageProps<"/decks/[deckId]">;
+
+export default function DeckPage(props: Props) {
   return (
     <main className="mx-auto grid w-full max-w-3xl gap-6 px-4 py-10">
       <Link
@@ -19,40 +31,38 @@ export default function DeckPage(props: PageProps<"/decks/[deckId]">) {
       >
         <ArrowLeftIcon className="size-4" /> All decks
       </Link>
-      {/* params is request data for this dynamic route, so it's read inside Suspense. */}
+      {/* params and searchParams are request data, so they're read inside Suspense. */}
       <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-muted/50" />}>
-        <DeckView params={props.params} />
+        <DeckView params={props.params} searchParams={props.searchParams} />
       </Suspense>
     </main>
   );
 }
 
-async function DeckView({ params }: { params: PageProps<"/decks/[deckId]">["params"] }) {
-  const { deckId } = await params;
+async function DeckView({ params, searchParams }: Pick<Props, "params" | "searchParams">) {
+  const [{ deckId }, search] = await Promise.all([params, searchParams]);
   // A malformed ID would make Postgres throw (22P02); treat it as not found.
   if (!idSchema.safeParse(deckId).success) notFound();
+  const query = parseSearchQuery(search.q);
+  const show = parseShowCount(search.show);
 
   await requireUser();
   const supabase = await createClient();
-  const [deckResult, cardsResult] = await Promise.all([
-    supabase
-      .from("decks")
-      .select("id, title, description")
-      .eq("id", deckId)
-      .maybeSingle(),
-    supabase
-      .from("cards")
-      .select("id, front, back")
-      .eq("deck_id", deckId)
-      .order("created_at", { ascending: false }),
+  const [deckResult, countResult, cards] = await Promise.all([
+    supabase.from("decks").select("id, title, description").eq("id", deckId).maybeSingle(),
+    supabase.from("cards").select("id", { count: "exact", head: true }).eq("deck_id", deckId),
+    query ? searchCards(supabase, deckId, query) : listCards(supabase, deckId, show + 1),
   ]);
 
   if (deckResult.error) throw deckResult.error;
-  if (cardsResult.error) throw cardsResult.error;
+  if (countResult.error) throw countResult.error;
   // Missing, or owned by someone else (RLS hides it): same answer either way.
   const deck = deckResult.data;
   if (!deck) notFound();
-  const cards = cardsResult.data;
+  const totalCards = countResult.count ?? 0;
+
+  // Without a search we asked for one extra card to learn whether there are more.
+  const hasMore = !query && cards.length > show;
 
   return (
     <>
@@ -75,7 +85,7 @@ async function DeckView({ params }: { params: PageProps<"/decks/[deckId]">["para
                 </Button>
               }
             />
-            <DeleteDeckButton deckId={deck.id} title={deck.title} cardCount={cards.length} />
+            <DeleteDeckButton deckId={deck.id} title={deck.title} cardCount={totalCards} />
           </div>
         </div>
         <div>
@@ -84,7 +94,46 @@ async function DeckView({ params }: { params: PageProps<"/decks/[deckId]">["para
           </Link>
         </div>
       </header>
-      <CardList deckId={deck.id} cards={cards} />
+      <CardList
+        deckId={deck.id}
+        cards={hasMore ? cards.slice(0, show) : cards}
+        totalCards={totalCards}
+        query={query}
+        searchCapped={!!query && cards.length >= SEARCH_RESULT_LIMIT}
+        nextShow={hasMore ? show + CARD_PAGE_SIZE : null}
+      />
     </>
   );
+}
+
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+async function searchCards(supabase: Supabase, deckId: string, query: string) {
+  const { data, error } = await supabase.rpc("search_deck_cards", {
+    p_deck_id: deckId,
+    p_query: query,
+    p_limit: SEARCH_RESULT_LIMIT,
+  });
+  if (error) throw error;
+  return data;
+}
+
+// Newest first, up to `limit` cards, in PAGE_SIZE requests.
+async function listCards(supabase: Supabase, deckId: string, limit: number) {
+  const cards: { id: string; front: string; back: string }[] = [];
+  while (cards.length < limit) {
+    const from = cards.length;
+    const to = Math.min(limit, from + PAGE_SIZE) - 1;
+    const { data, error } = await supabase
+      .from("cards")
+      .select("id, front, back")
+      .eq("deck_id", deckId)
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(from, to);
+    if (error) throw error;
+    cards.push(...data);
+    if (data.length < to - from + 1) break;
+  }
+  return cards;
 }

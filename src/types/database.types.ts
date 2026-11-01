@@ -137,7 +137,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "submit_card_review":
+            "search_deck_cards":
+{ Args: { "p_deck_id": string,"p_limit"?: number,"p_query": string }; Returns: {
+              "back": string,"front": string,"id": string
+            }[]
+                           },
+"submit_card_review":
 { Args: { "p_card_id": string,"p_rating": string,"p_review_duration_ms": number,"p_review_id": string }; Returns: {
               "ease_factor": number,"interval_days": number,"next_review_at": string,"repetitions": number,"status": string
             }[]

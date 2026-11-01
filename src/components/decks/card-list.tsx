@@ -1,68 +1,89 @@
 "use client";
 
 import { EllipsisIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 import { deleteCard } from "@/app/decks/actions";
 import { CardFormDialog, type CardData } from "@/components/decks/card-form-dialog";
+import { CardSearch } from "@/components/decks/card-search";
 import { QuizletImportDialog } from "@/components/decks/quizlet-import-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { SEARCH_RESULT_LIMIT } from "@/lib/validation";
 
 // Which dialog is open: none, "add", or editing a specific card.
 type DialogState = { mode: "closed" } | { mode: "add" } | { mode: "edit"; card: CardData };
 
-export function CardList({ deckId, cards }: { deckId: string; cards: CardData[] }) {
-  const [filter, setFilter] = useState("");
+export function CardList({
+  deckId,
+  cards,
+  totalCards,
+  query,
+  searchCapped,
+  nextShow,
+}: {
+  deckId: string;
+  cards: CardData[];
+  totalCards: number; // all cards in the deck, not just the ones shown
+  query: string; // "" = no search
+  searchCapped: boolean; // search hit the result limit
+  nextShow: number | null; // ?show= value for "Load more", or null if none
+}) {
   const [dialog, setDialog] = useState<DialogState>({ mode: "closed" });
 
-  // Quick in-deck filter. Global fuzzy search is a separate, later feature.
-  const visible = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return cards;
-    return cards.filter((card) =>
-      [card.front, card.back].some((field) =>
-        field.toLowerCase().includes(q),
-      ),
-    );
-  }, [cards, filter]);
-
   return (
-    <section className="grid gap-4">
-      <div className="flex items-center gap-2">
-        <Input
-          type="search"
-          placeholder="Filter cards…"
-          aria-label="Filter cards"
-          value={filter}
-          onChange={(event) => setFilter(event.target.value)}
-        />
+    // `group`: the search box sets data-pending while a new list loads,
+    // and the list dims through group-has-data-pending.
+    <section className="group grid gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <CardSearch deckId={deckId} initialQuery={query} />
         <Button onClick={() => setDialog({ mode: "add" })}>
           <PlusIcon /> Add card
         </Button>
         <QuizletImportDialog deckId={deckId} />
       </div>
 
-      {cards.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No cards yet. Add your first one.</p>
-      ) : visible.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No cards match “{filter}”.</p>
-      ) : (
-        <ul className="divide-y rounded-xl border">
-          {visible.map((card) => (
-            <CardRow
-              key={card.id}
-              card={card}
-              onEdit={() => setDialog({ mode: "edit", card })}
-            />
-          ))}
-        </ul>
-      )}
+      <div className="grid gap-3 transition-opacity group-has-data-pending:opacity-50">
+        {totalCards === 0 ? (
+          <p className="text-sm text-muted-foreground">No cards yet. Add your first one.</p>
+        ) : cards.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No cards match “{query}”.</p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground">
+              {query
+                ? searchCapped
+                  ? `Showing top ${SEARCH_RESULT_LIMIT} matches`
+                  : `${cards.length} ${cards.length === 1 ? "match" : "matches"}`
+                : `Showing ${cards.length} of ${totalCards} ${totalCards === 1 ? "card" : "cards"}`}
+            </p>
+            <ul className="divide-y rounded-xl border">
+              {cards.map((card) => (
+                <CardRow
+                  key={card.id}
+                  card={card}
+                  onEdit={() => setDialog({ mode: "edit", card })}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+        {nextShow ? (
+          <Link
+            href={`/decks/${deckId}?show=${nextShow}`}
+            replace
+            scroll={false}
+            className={buttonVariants({ variant: "outline", className: "justify-self-center" })}
+          >
+            Load more
+          </Link>
+        ) : null}
+      </div>
 
       <CardFormDialog
         // Remount per card so the form shows that card's values.
