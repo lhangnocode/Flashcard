@@ -137,7 +137,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "search_deck_cards":
+            "get_dashboard_stats":
+{ Args: { "p_time_zone"?: string }; Returns: {
+              "current_streak": number,"heatmap": Json,"longest_streak": number,"mastered_cards": number,"reviews_today": number,"study_time_week_ms": number
+            }[]
+                           },
+"search_deck_cards":
 { Args: { "p_deck_id": string,"p_limit"?: number,"p_query": string }; Returns: {
               "back": string,"front": string,"id": string
             }[]

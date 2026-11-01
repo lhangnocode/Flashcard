@@ -3,7 +3,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/site";
 
-// Signed-in visitors never see this page: proxy.ts redirects "/" to /decks.
+// Signed-in visitors never see this page: proxy.ts redirects "/" to /dashboard.
 // It reads no request data, so it's fully prerendered.
 
 const FEATURES = [

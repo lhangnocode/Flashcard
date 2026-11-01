@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { NavLinkList, NavLinks } from "@/components/layout/nav-links";
+import { TimeZoneCookie } from "@/components/layout/time-zone-cookie";
 import { UserMenu } from "@/components/layout/user-menu";
 import { SITE_NAME } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
@@ -13,14 +15,21 @@ export function Navbar() {
       className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60"
     >
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4">
-        <Link href="/decks" className="font-semibold tracking-tight">
-          {SITE_NAME}
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/decks" className="font-semibold tracking-tight">
+            {SITE_NAME}
+          </Link>
+          {/* usePathname() can read request data, so it sits behind Suspense. */}
+          <Suspense fallback={<NavLinkList />}>
+            <NavLinks />
+          </Suspense>
+        </div>
         {/* Reading the session reads cookies, so it streams in behind Suspense. */}
         <Suspense fallback={<div className="h-8 w-24 animate-pulse rounded-lg bg-muted" />}>
           <CurrentUserMenu />
         </Suspense>
       </div>
+      <TimeZoneCookie />
     </header>
   );
 }

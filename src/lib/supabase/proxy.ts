@@ -52,8 +52,8 @@ export async function updateSession(request: NextRequest) {
   let redirectTo: string | null = null;
   if (!signedIn && isProtected(pathname)) redirectTo = "/login";
   if (signedIn && pathname === "/login") redirectTo = "/dashboard";
-  // The landing page is for signed-out visitors; signed-in users go to their decks.
-  if (signedIn && pathname === "/") redirectTo = "/decks";
+  // The landing page is for signed-out visitors; signed-in users go home.
+  if (signedIn && pathname === "/") redirectTo = "/dashboard";
 
   if (redirectTo) {
     const url = request.nextUrl.clone();
