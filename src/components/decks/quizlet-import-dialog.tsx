@@ -1,7 +1,7 @@
 "use client";
 
-import { UploadIcon } from "lucide-react";
-import { useDeferredValue, useId, useMemo, useState, useTransition } from "react";
+import { FileTextIcon, UploadIcon } from "lucide-react";
+import { useDeferredValue, useId, useMemo, useRef, useState, useTransition } from "react";
 import { importCards } from "@/app/decks/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,13 +35,14 @@ export function QuizletImportDialog({ deckId }: { deckId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" />}>
-        <UploadIcon /> Import from Quizlet
+        <UploadIcon /> Import
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Import from Quizlet</DialogTitle>
+          <DialogTitle>Import cards</DialogTitle>
           <DialogDescription>
-            In Quizlet, open the set → ⋯ → Export, copy the text, and paste it below.
+            Paste a Quizlet export (set → ⋯ → Export), or open an Anki text export (File →
+            Export → “Cards in Plain Text (.txt)” or “Notes in Plain Text”, with or without HTML).
           </DialogDescription>
         </DialogHeader>
         {/* Remounts on each open, so a closed dialog starts fresh next time. */}
@@ -60,7 +61,9 @@ function ImportForm({ deckId, onDone }: { deckId: string; onDone: () => void }) 
   const [customCard, setCustomCard] = useState("");
   const [skipExisting, setSkipExisting] = useState(true);
   const [result, setResult] = useState<ImportResult>();
+  const [fileError, setFileError] = useState<string>();
   const [pending, startTransition] = useTransition();
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const termSeparator =
     termOption === "custom" ? unescapeSeparator(customTerm) : TERM_SEPARATORS[termOption];
@@ -74,17 +77,36 @@ function ImportForm({ deckId, onDone }: { deckId: string; onDone: () => void }) 
     [deferredText, termSeparator, cardSeparator, skipExisting],
   );
   const bytes = useMemo(() => new TextEncoder().encode(text).length, [text]);
+  // An Anki file names its own separator and quoting, so the controls don't apply.
+  const anki = parsed.anki;
 
   // The first problem that blocks importing, if any.
-  const blocker = !termSeparator
+  const blocker = !anki && !termSeparator
     ? "Enter a custom separator between term and definition."
-    : !cardSeparator
+    : !anki && !cardSeparator
       ? "Enter a custom separator between cards."
       : bytes > MAX_IMPORT_BYTES
         ? `Pasted text is ${Math.ceil(bytes / 1024)} KB; the maximum is ${MAX_IMPORT_BYTES / 1024} KB.`
         : parsed.cards.length > MAX_IMPORT_CARDS
           ? `Maximum ${MAX_IMPORT_CARDS} cards per import. Please split large decks into multiple batches.`
           : null;
+
+  async function openFile(file: File | undefined) {
+    setFileError(undefined);
+    if (!file) return;
+    // Checked before reading, so a huge file is never loaded into the page.
+    if (file.size > MAX_IMPORT_BYTES) {
+      setFileError(
+        `${file.name} is ${Math.ceil(file.size / 1024)} KB; the maximum is ${MAX_IMPORT_BYTES / 1024} KB.`,
+      );
+      return;
+    }
+    try {
+      setText(await file.text());
+    } catch {
+      setFileError(`Couldn’t read ${file.name}.`);
+    }
+  }
 
   function submit() {
     setResult(undefined);
@@ -121,7 +143,27 @@ function ImportForm({ deckId, onDone }: { deckId: string; onDone: () => void }) 
   return (
     <div className="grid gap-4">
       <div className="grid gap-1.5">
-        <Label htmlFor={textId}>Exported text</Label>
+        <div className="flex items-end justify-between gap-2">
+          <Label htmlFor={textId}>Exported text</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => fileInput.current?.click()}
+          >
+            <FileTextIcon /> Open .txt file
+          </Button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".txt,.tsv,.csv,text/plain"
+            className="hidden"
+            onChange={(event) => {
+              void openFile(event.target.files?.[0]);
+              event.target.value = ""; // lets the same file be picked again
+            }}
+          />
+        </div>
         <Textarea
           id={textId}
           value={text}
@@ -131,9 +173,22 @@ function ImportForm({ deckId, onDone }: { deckId: string; onDone: () => void }) 
           spellCheck={false}
           autoFocus
         />
+        {fileError ? (
+          <p role="alert" className="text-sm text-destructive">
+            {fileError}
+          </p>
+        ) : null}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      {anki ? (
+        <p role="status" className="rounded-lg bg-muted/50 px-3 py-2 text-sm">
+          Anki export detected ({anki.separatorName}-separated, {anki.html ? "HTML" : "plain text"}
+          ). The file’s own settings are used
+          {anki.html ? "; formatting, images and audio tags are removed" : "; audio tags are removed"}.
+        </p>
+      ) : null}
+
+      <fieldset disabled={!!anki} className="grid gap-3 disabled:opacity-50 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <Label htmlFor={termId}>Between term and definition</Label>
           <select
@@ -176,11 +231,12 @@ function ImportForm({ deckId, onDone }: { deckId: string; onDone: () => void }) 
             />
           ) : null}
         </div>
-      </div>
+      </fieldset>
       <p className="text-xs text-muted-foreground">
-        Tip: if your definitions span several lines, set “Between rows” to Custom in Quizlet’s
-        export (for example <code>---</code>), then choose Custom here with the same marker. In
-        custom fields, <code>\n</code> means a new line and <code>\t</code> a tab.
+        Tip: if your Quizlet definitions span several lines, set “Between rows” to Custom in
+        Quizlet’s export (for example <code>---</code>), then choose Custom here with the same
+        marker. In custom fields, <code>\n</code> means a new line and <code>\t</code> a tab.
+        Anki exports keep multiline fields on their own, so these settings aren’t needed for them.
       </p>
 
       <label className="flex items-center gap-2 text-sm">
@@ -248,7 +304,7 @@ function Preview({
             <tbody className="divide-y">
               {cards.slice(0, PREVIEW_ROWS).map((card, index) => (
                 <tr key={index} className="align-top">
-                  <td className="px-3 py-1.5 font-medium">{card.front}</td>
+                  <td className="px-3 py-1.5 font-medium whitespace-pre-wrap">{card.front}</td>
                   <td className="px-3 py-1.5">
                     <div className="line-clamp-4 whitespace-pre-wrap">{card.back}</div>
                   </td>
