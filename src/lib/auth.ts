@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export type CurrentUser = {
   id: string;
   email: string | undefined;
+  createdAt: string; // ISO timestamp
 };
 
 // The secure auth check. Call it at the top of every protected page and
@@ -18,5 +19,5 @@ export async function requireUser(): Promise<CurrentUser> {
   if (!user) redirect("/login");
 
   // Return only what callers need, not the full user object.
-  return { id: user.id, email: user.email };
+  return { id: user.id, email: user.email, createdAt: user.created_at };
 }

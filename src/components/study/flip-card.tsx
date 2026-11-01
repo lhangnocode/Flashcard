@@ -39,9 +39,15 @@ export function FlipCard({
         </Face>
 
         <Face hidden={!flipped} back>
-          <p className="text-center text-xl font-semibold">{card.front}</p>
-          {/* Left-aligned so multiline backs (reading, examples) stay readable. */}
-          <p className="text-lg whitespace-pre-wrap break-words">{card.back}</p>
+          <div className="mx-auto flex h-full w-full max-w-lg flex-col items-center justify-center p-8 text-center">
+            <p className="mb-3 text-base font-medium text-muted-foreground">{card.front}</p>
+            <div aria-hidden className="mb-4 w-16 border-t border-border" />
+            {/* w-fit centers a short back as one line; a multiline back keeps
+                its lines left-aligned inside the centered box. */}
+            <p className="w-fit max-w-full text-left text-2xl leading-relaxed font-semibold break-words whitespace-pre-wrap text-foreground">
+              {card.back}
+            </p>
+          </div>
         </Face>
       </div>
     </button>
@@ -62,7 +68,9 @@ function Face({
       // Screen readers should only read the face that's showing.
       aria-hidden={hidden}
       className={cn(
-        "col-start-1 row-start-1 flex min-h-64 flex-col justify-center gap-4 rounded-2xl border bg-card p-6 shadow-sm backface-hidden",
+        "col-start-1 row-start-1 flex min-h-64 flex-col justify-center gap-4 rounded-2xl border bg-card shadow-sm backface-hidden",
+        // The back face pads its own centered container.
+        !back && "p-6",
         back && "rotate-y-180",
       )}
     >

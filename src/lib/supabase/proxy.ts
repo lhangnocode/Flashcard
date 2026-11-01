@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/decks", "/study"];
+const PROTECTED_PREFIXES = ["/dashboard", "/decks", "/study", "/settings"];
 
 function isProtected(pathname: string) {
   return PROTECTED_PREFIXES.some(
@@ -52,6 +52,8 @@ export async function updateSession(request: NextRequest) {
   let redirectTo: string | null = null;
   if (!signedIn && isProtected(pathname)) redirectTo = "/login";
   if (signedIn && pathname === "/login") redirectTo = "/dashboard";
+  // The landing page is for signed-out visitors; signed-in users go to their decks.
+  if (signedIn && pathname === "/") redirectTo = "/decks";
 
   if (redirectTo) {
     const url = request.nextUrl.clone();

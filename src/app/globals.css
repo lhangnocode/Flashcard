@@ -128,3 +128,9 @@
     @apply font-sans;
   }
 }
+
+/* Focus mode: a page that renders [data-focus-mode] (the study session)
+   hides the app navbar. Pure CSS, so it's correct in the server HTML. */
+body:has([data-focus-mode]) [data-app-navbar] {
+  display: none;
+}
