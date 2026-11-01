@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { submitReview } from "@/app/decks/[deckId]/study/actions";
+import { submitReview } from "@/app/(focus)/decks/[deckId]/study/actions";
 
 export type ReviewJob = {
   reviewId: string; // idempotency key: retries reuse it, so the DB applies it once

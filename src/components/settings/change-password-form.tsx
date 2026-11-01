@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { changePassword } from "@/app/settings/actions";
+import { changePassword } from "@/app/(app)/settings/actions";
 import { FormError } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

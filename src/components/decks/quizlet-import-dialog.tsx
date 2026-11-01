@@ -2,7 +2,7 @@
 
 import { FileTextIcon, UploadIcon } from "lucide-react";
 import { useDeferredValue, useId, useMemo, useRef, useState, useTransition } from "react";
-import { importCards } from "@/app/decks/actions";
+import { importCards } from "@/app/(app)/decks/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

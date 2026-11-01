@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deleteDeck } from "@/app/decks/actions";
+import { deleteDeck } from "@/app/(app)/decks/actions";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,

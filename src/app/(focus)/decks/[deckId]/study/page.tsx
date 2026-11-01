@@ -10,8 +10,8 @@ const CARD_FIELDS = "id, front, back";
 
 export default function StudyPage(props: PageProps<"/decks/[deckId]/study">) {
   return (
-    // data-focus-mode hides the navbar (see globals.css).
-    <main data-focus-mode className="mx-auto grid w-full max-w-xl gap-6 px-4 py-10">
+    // No navbar here: this page is in the (focus) route group.
+    <main className="mx-auto grid w-full max-w-xl gap-6 px-4 py-10">
       <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted/50" />}>
         <StudyLoader params={props.params} />
       </Suspense>

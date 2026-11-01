@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { createCard, updateCard } from "@/app/decks/actions";
+import { createCard, updateCard } from "@/app/(app)/decks/actions";
 import { FormError, FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import {

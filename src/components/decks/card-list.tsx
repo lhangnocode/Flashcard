@@ -3,7 +3,7 @@
 import { ChevronDownIcon, EllipsisIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { useId, useState, useTransition } from "react";
-import { deleteCard } from "@/app/decks/actions";
+import { deleteCard } from "@/app/(app)/decks/actions";
 import { CardFormDialog, type CardData } from "@/components/decks/card-form-dialog";
 import { CardSearch } from "@/components/decks/card-search";
 import { QuizletImportDialog } from "@/components/decks/quizlet-import-dialog";

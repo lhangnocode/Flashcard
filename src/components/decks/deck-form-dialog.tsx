@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, type ReactElement } from "react";
-import { createDeck, updateDeck } from "@/app/decks/actions";
+import { createDeck, updateDeck } from "@/app/(app)/decks/actions";
 import { FormError, FormField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
 import {

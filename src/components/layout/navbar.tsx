@@ -6,12 +6,10 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { SITE_NAME } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 
-// Sticky top bar for signed-in pages. Hidden during study sessions by the
-// [data-focus-mode] rule in globals.css.
+// Sticky top bar for signed-in pages, rendered by src/app/(app)/layout.tsx.
 export function Navbar() {
   return (
     <header
-      data-app-navbar
       className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60"
     >
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4">
