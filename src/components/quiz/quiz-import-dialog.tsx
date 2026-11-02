@@ -1,6 +1,6 @@
 "use client";
 
-import { ListChecksIcon } from "lucide-react";
+import { UploadIcon } from "lucide-react";
 import { useDeferredValue, useId, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { importQuizQuestions } from "@/app/(app)/decks/actions";
@@ -36,7 +36,7 @@ export function QuizImportDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant={variant} />}>
-        <ListChecksIcon /> Import quiz
+        <UploadIcon /> Import quiz
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
