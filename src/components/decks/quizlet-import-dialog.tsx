@@ -35,7 +35,7 @@ export function QuizletImportDialog({ deckId }: { deckId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="outline" />}>
-        <UploadIcon /> Import
+        <UploadIcon /> Import deck
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>

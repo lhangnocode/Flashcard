@@ -6,6 +6,7 @@ import { CardList } from "@/components/decks/card-list";
 import { DeckFormDialog } from "@/components/decks/deck-form-dialog";
 import { DeleteDeckButton } from "@/components/decks/delete-deck-button";
 import { ExportDeckButton } from "@/components/decks/export-deck-button";
+import { QuizletImportDialog } from "@/components/decks/quizlet-import-dialog";
 import { QuizImportDialog } from "@/components/quiz/quiz-import-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
@@ -96,18 +97,26 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
             <DeleteDeckButton deckId={deck.id} title={deck.title} cardCount={totalCards} />
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/decks/${deck.id}/study`} className={buttonVariants()}>
-            Study deck
-          </Link>
-          <Link
-            href={`/decks/${deck.id}/quiz`}
-            className={buttonVariants({ variant: "outline" })}
-          >
-            <ListChecksIcon /> Quiz{quizCount > 0 ? ` (${quizCount})` : ""}
-          </Link>
+        {/* Three clusters: study, quiz data, deck data. Each cluster wraps as a unit. */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/decks/${deck.id}/study`} className={buttonVariants()}>
+              Study deck
+            </Link>
+            <Link
+              href={`/decks/${deck.id}/quiz`}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              <ListChecksIcon /> Quiz{quizCount > 0 ? ` (${quizCount})` : ""}
+            </Link>
+          </div>
+          <ToolbarDivider />
           <QuizImportDialog deckId={deck.id} existingCount={quizCount} />
-          <ExportDeckButton deckId={deck.id} />
+          <ToolbarDivider />
+          <div className="flex flex-wrap items-center gap-2">
+            <QuizletImportDialog deckId={deck.id} />
+            <ExportDeckButton deckId={deck.id} />
+          </div>
         </div>
       </header>
       <CardList
@@ -121,6 +130,11 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
       />
     </>
   );
+}
+
+// Decorative; hidden on narrow screens, where wrapped rows would leave it dangling.
+function ToolbarDivider() {
+  return <div aria-hidden className="hidden h-5 w-px bg-border/60 sm:block" />;
 }
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;

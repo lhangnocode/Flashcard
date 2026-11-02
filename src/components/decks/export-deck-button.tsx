@@ -39,7 +39,7 @@ export function ExportDeckButton({ deckId }: { deckId: string }) {
 
   return (
     <Button variant="outline" onClick={onExport} disabled={pending}>
-      <DownloadIcon /> {pending ? "Exporting…" : "Export"}
+      <DownloadIcon /> {pending ? "Exporting…" : "Export deck"}
     </Button>
   );
 }

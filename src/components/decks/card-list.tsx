@@ -6,7 +6,6 @@ import { useId, useState, useTransition } from "react";
 import { deleteCard } from "@/app/(app)/decks/actions";
 import { CardFormDialog, type CardData } from "@/components/decks/card-form-dialog";
 import { CardSearch } from "@/components/decks/card-search";
-import { QuizletImportDialog } from "@/components/decks/quizlet-import-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -53,7 +52,6 @@ export function CardList({
         <Button onClick={() => setDialog({ mode: "add" })}>
           <PlusIcon /> Add card
         </Button>
-        <QuizletImportDialog deckId={deckId} />
       </div>
 
       <div className="grid gap-3 transition-opacity group-has-data-pending:opacity-50">
