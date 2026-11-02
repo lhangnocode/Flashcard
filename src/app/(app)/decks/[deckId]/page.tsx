@@ -1,10 +1,12 @@
-import { ArrowLeftIcon, PencilIcon } from "lucide-react";
+import { ArrowLeftIcon, ListChecksIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CardList } from "@/components/decks/card-list";
 import { DeckFormDialog } from "@/components/decks/deck-form-dialog";
 import { DeleteDeckButton } from "@/components/decks/delete-deck-button";
+import { ExportDeckButton } from "@/components/decks/export-deck-button";
+import { QuizImportDialog } from "@/components/quiz/quiz-import-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -51,18 +53,21 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
 
   await requireUser();
   const supabase = await createClient();
-  const [deckResult, countResult, cards] = await Promise.all([
+  const [deckResult, countResult, quizCountResult, cards] = await Promise.all([
     supabase.from("decks").select("id, title, description").eq("id", deckId).maybeSingle(),
     supabase.from("cards").select("id", { count: "exact", head: true }).eq("deck_id", deckId),
+    supabase.from("quiz_questions").select("id", { count: "exact", head: true }).eq("deck_id", deckId),
     query ? searchCards(supabase, deckId, query, scope) : listCards(supabase, deckId, show + 1),
   ]);
 
   if (deckResult.error) throw deckResult.error;
   if (countResult.error) throw countResult.error;
+  if (quizCountResult.error) throw quizCountResult.error;
   // Missing, or owned by someone else (RLS hides it): same answer either way.
   const deck = deckResult.data;
   if (!deck) notFound();
   const totalCards = countResult.count ?? 0;
+  const quizCount = quizCountResult.count ?? 0;
 
   // Without a search we asked for one extra card to learn whether there are more.
   const hasMore = !query && cards.length > show;
@@ -91,10 +96,18 @@ async function DeckView({ params, searchParams }: Pick<Props, "params" | "search
             <DeleteDeckButton deckId={deck.id} title={deck.title} cardCount={totalCards} />
           </div>
         </div>
-        <div>
+        <div className="flex flex-wrap gap-2">
           <Link href={`/decks/${deck.id}/study`} className={buttonVariants()}>
             Study deck
           </Link>
+          <Link
+            href={`/decks/${deck.id}/quiz`}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <ListChecksIcon /> Quiz{quizCount > 0 ? ` (${quizCount})` : ""}
+          </Link>
+          <QuizImportDialog deckId={deck.id} existingCount={quizCount} />
+          <ExportDeckButton deckId={deck.id} />
         </div>
       </header>
       <CardList

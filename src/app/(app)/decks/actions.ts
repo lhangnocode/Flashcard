@@ -14,9 +14,13 @@ import {
   formFields,
   frontKey,
   idSchema,
+  type ExportResult,
   importSchema,
   type ImportResult,
+  quizImportSchema,
+  type QuizImportResult,
 } from "@/lib/validation";
+import { formatDeckExport } from "@/lib/deck-export";
 
 // Server Actions are public endpoints: every ID below came from the browser
 // and is untrusted. RLS hides rows the user doesn't own, so an UPDATE/DELETE
@@ -242,4 +246,85 @@ export async function importCards(
 
   refresh();
   return { ok: true, imported: rows.length, skippedDuplicates };
+}
+
+// ---------------------------------------------------------------- export
+
+// All of a deck's cards in deck order, as Anki-style text. The browser turns
+// the text into a file; returning it here keeps paging on the server.
+export async function exportDeck(deckId: string): Promise<ExportResult> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(deckId).success) return { ok: false, error: "Not found." };
+
+  const supabase = await createClient();
+  const { data: deck, error: deckError } = await supabase
+    .from("decks")
+    .select("title")
+    .eq("id", deckId)
+    .maybeSingle();
+  if (deckError) {
+    console.error("exportDeck: deck", deckError);
+    return { ok: false, error: "Something went wrong. Try again." };
+  }
+  if (!deck) return { ok: false, error: "Not found." };
+
+  const cards: { front: string; back: string }[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("cards")
+      .select("front, back")
+      .eq("deck_id", deckId)
+      .eq("user_id", user.id)
+      .order("position")
+      .order("id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) {
+      console.error("exportDeck: cards", error);
+      return { ok: false, error: "Something went wrong. Try again." };
+    }
+    cards.push(...data);
+    if (data.length < PAGE_SIZE) break;
+  }
+
+  return { ok: true, title: deck.title, count: cards.length, text: formatDeckExport(cards) };
+}
+
+// ---------------------------------------------------------------- quiz
+
+// Adds questions to a deck, or with `replace` swaps the whole set, in one
+// transaction (import_quiz_questions RPC).
+export async function importQuizQuestions(
+  deckId: string,
+  questions: unknown,
+  options: unknown,
+): Promise<QuizImportResult> {
+  await requireUser();
+  if (!idSchema.safeParse(deckId).success) return { ok: false, error: "Not found." };
+
+  // Parsed in the browser already, but the arguments can be forged.
+  const parsed = quizImportSchema.safeParse({
+    questions,
+    replace: (options as { replace?: unknown } | null)?.replace,
+  });
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const index = issue?.path[0] === "questions" ? issue.path[1] : undefined;
+    const prefix = typeof index === "number" ? `Question ${index + 1}: ` : "";
+    return { ok: false, error: `${prefix}${issue?.message ?? "Invalid import."}` };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("import_quiz_questions", {
+    p_deck_id: deckId,
+    p_questions: parsed.data.questions,
+    p_replace: parsed.data.replace,
+  });
+  if (error) {
+    if (error.code === FK_VIOLATION) return { ok: false, error: "Not found." };
+    console.error("importQuizQuestions", error);
+    return { ok: false, error: "Something went wrong. Try again." };
+  }
+
+  refresh();
+  return { ok: true, imported: data };
 }

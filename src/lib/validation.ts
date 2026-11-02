@@ -131,3 +131,38 @@ export type ActionResult =
   | { ok: false; error?: string; fieldErrors?: Record<string, string[] | undefined> };
 
 export type ActionState = ActionResult | null;
+
+// ---------------------------------------------------------------- quiz
+
+// Mirrors the checks on public.quiz_questions.
+export const quizQuestionSchema = z.object({
+  question: requiredText(1000),
+  options: z.tuple([requiredText(500), requiredText(500), requiredText(500), requiredText(500)]),
+  correct_index: z.number().int().min(0).max(3),
+  explanation: z
+    .string()
+    .trim()
+    .max(5000, "Max 5000 characters")
+    .nullable()
+    .transform((value) => (value ? value : null)),
+});
+
+export type QuizQuestionInput = z.output<typeof quizQuestionSchema>;
+
+export const MAX_QUIZ_IMPORT = 500;
+
+export const quizImportSchema = z.object({
+  questions: z
+    .array(quizQuestionSchema)
+    .min(1, "Nothing to import.")
+    .max(MAX_QUIZ_IMPORT, `Maximum ${MAX_QUIZ_IMPORT} questions per import.`),
+  replace: z.boolean(),
+});
+
+export type QuizImportResult =
+  | { ok: true; imported: number }
+  | { ok: false; error: string };
+
+export type ExportResult =
+  | { ok: true; title: string; count: number; text: string }
+  | { ok: false; error: string };

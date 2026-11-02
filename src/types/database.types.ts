@@ -89,6 +89,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"quiz_questions": {
+                  Row: {
+                    "correct_index": number,"created_at": string,"deck_id": string,"explanation": string | null,"id": string,"options": (string)[],"position": number,"question": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "correct_index": number,"created_at"?: string,"deck_id": string,"explanation"?: string | null,"id"?: string,"options": (string)[],"position"?: number,"question": string,"user_id": string
+                  }
+                  Update: {
+                    "correct_index"?: number,"created_at"?: string,"deck_id"?: string,"explanation"?: string | null,"id"?: string,"options"?: (string)[],"position"?: number,"question"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "quiz_questions_deck_id_user_id_fkey"
+      columns: ["deck_id","user_id"]
+isOneToOne: false
+      referencedRelation: "deck_summaries"
+      referencedColumns: ["id","user_id"]
+    },{
+      foreignKeyName: "quiz_questions_deck_id_user_id_fkey"
+      columns: ["deck_id","user_id"]
+isOneToOne: false
+      referencedRelation: "decks"
+      referencedColumns: ["id","user_id"]
+    }
+                  ]
                 },"review_logs": {
                   Row: {
                     "card_id": string | null,"id": string,"rating": string,"review_duration_ms": number | null,"reviewed_at": string,"user_id": string
@@ -142,6 +168,9 @@ isOneToOne: false
               "current_streak": number,"heatmap": Json,"longest_streak": number,"mastered_cards": number,"reviews_today": number,"study_time_week_ms": number
             }[]
                            },
+"import_quiz_questions":
+{ Args: { "p_deck_id": string,"p_questions": Json,"p_replace"?: boolean }; Returns: number
+                           },
 "search_deck_cards":
 { Args: { "p_deck_id": string,"p_limit"?: number,"p_query": string,"p_scope"?: string }; Returns: {
               "back": string,"front": string,"id": string
@@ -151,6 +180,9 @@ isOneToOne: false
 { Args: { "p_card_id": string,"p_rating": string,"p_review_duration_ms": number,"p_review_id": string }; Returns: {
               "ease_factor": number,"interval_days": number,"next_review_at": string,"repetitions": number,"status": string
             }[]
+                           },
+"valid_quiz_options":
+{ Args: { "p_options": (string)[] }; Returns: boolean
                            }
           }
           Enums: {
